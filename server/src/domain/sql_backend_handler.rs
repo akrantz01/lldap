@@ -257,7 +257,7 @@ impl BackendHandler for SqlBackendHandler {
 
             query_builder.build_sqlx(DbQueryBuilder {})
         };
-        debug!(%query);
+        debug!(%query, ?values);
 
         // For group_by.
         use itertools::Itertools;
@@ -276,9 +276,13 @@ impl BackendHandler for SqlBackendHandler {
                 creation_date: group_details.creation_date,
                 uuid: group_details.uuid,
                 users: rows
-                    .map(|row| row.get::<UserId, _>(&*Memberships::UserId.to_string()))
+                    .map(|row| {
+                        row.get::<Option<UserId>, _>(&*Memberships::UserId.to_string())
+                    })
                     // If a group has no users, an empty string is returned because of the left
                     // join.
+                    .filter(|s| s.is_some())
+                    .map(Option::unwrap)
                     .filter(|s| !s.as_str().is_empty())
                     .collect(),
             });

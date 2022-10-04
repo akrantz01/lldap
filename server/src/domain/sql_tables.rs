@@ -4,10 +4,10 @@ use sea_query_binder::SqlxBinder;
 use sqlx::Row;
 use tracing::{debug, warn};
 
-pub type Pool = sqlx::sqlite::SqlitePool;
-pub type PoolOptions = sqlx::sqlite::SqlitePoolOptions;
-pub type DbRow = sqlx::sqlite::SqliteRow;
-pub type DbQueryBuilder = SqliteQueryBuilder;
+pub type Pool = sqlx::postgres::PgPool;
+pub type PoolOptions = sqlx::postgres::PgPoolOptions;
+pub type DbRow = sqlx::postgres::PgRow;
+pub type DbQueryBuilder = PostgresQueryBuilder;
 
 impl From<GroupId> for Value {
     fn from(group_id: GroupId) -> Self {
@@ -74,12 +74,12 @@ pub enum Memberships {
 async fn column_exists(pool: &Pool, table_name: &str, column_name: &str) -> sqlx::Result<bool> {
     // Sqlite specific
     let query = format!(
-        "SELECT COUNT(*) AS col_count FROM pragma_table_info('{}') WHERE name = '{}'",
+        "SELECT count(*) AS col_count FROM information_schema.columns WHERE table_name = '{}' AND column_name = '{}'",
         table_name, column_name
     );
     match sqlx::query(&query).fetch_one(pool).await {
         Err(_) => Ok(false),
-        Ok(row) => Ok(row.get::<i32, _>("col_count") > 0),
+        Ok(row) => Ok(row.get::<i64, _>("col_count") > 0),
     }
 }
 
@@ -106,9 +106,6 @@ pub async fn create_group(group_name: &str, pool: &Pool) -> sqlx::Result<()> {
 }
 
 pub async fn init_table(pool: &Pool) -> sqlx::Result<()> {
-    // SQLite needs this pragma to be turned on. Other DB might not understand this, so ignore the
-    // error.
-    let _ = sqlx::query("PRAGMA foreign_keys = ON").execute(pool).await;
     sqlx::query(
         &Table::create()
             .table(Users::Table)
@@ -128,7 +125,7 @@ pub async fn init_table(pool: &Pool) -> sqlx::Result<()> {
             .col(ColumnDef::new(Users::FirstName).string_len(255).not_null())
             .col(ColumnDef::new(Users::LastName).string_len(255).not_null())
             .col(ColumnDef::new(Users::Avatar).binary())
-            .col(ColumnDef::new(Users::CreationDate).date_time().not_null())
+            .col(ColumnDef::new(Users::CreationDate).timestamp_with_time_zone().not_null())
             .col(ColumnDef::new(Users::PasswordHash).binary())
             .col(ColumnDef::new(Users::TotpSecret).string_len(64))
             .col(ColumnDef::new(Users::MfaType).string_len(64))
@@ -146,7 +143,8 @@ pub async fn init_table(pool: &Pool) -> sqlx::Result<()> {
                 ColumnDef::new(Groups::GroupId)
                     .integer()
                     .not_null()
-                    .primary_key(),
+                    .primary_key()
+                    .auto_increment(),
             )
             .col(
                 ColumnDef::new(Groups::DisplayName)
@@ -154,7 +152,7 @@ pub async fn init_table(pool: &Pool) -> sqlx::Result<()> {
                     .unique_key()
                     .not_null(),
             )
-            .col(ColumnDef::new(Users::CreationDate).date_time().not_null())
+            .col(ColumnDef::new(Users::CreationDate).timestamp_with_time_zone().not_null())
             .col(ColumnDef::new(Users::Uuid).string_len(36).not_null())
             .to_string(DbQueryBuilder {}),
     )

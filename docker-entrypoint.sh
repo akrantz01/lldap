@@ -28,6 +28,6 @@ find /data \! -user "$UID" -exec chown "$UID:$GID" '{}' +
 
 echo "> Starting lldap.."
 echo ""
-exec gosu "$UID:$GID" /app/lldap "$@"
+exec su-exec "$UID:$GID" /app/lldap "$@"
 
 exec "$@"

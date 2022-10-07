@@ -1,13 +1,26 @@
 #!/usr/bin/env bash
-set -euo pipefail
+set -eo pipefail
 
 CONFIG_FILE=/data/lldap_config.toml
 
-if [[ ( ! -w "/data" ) ]] || [[ ( ! -d "/data" ) ]]; then
-  echo "[entrypoint] The /data folder doesn't exist or cannot be written to. Make sure to mount
-  a volume or folder to /data to persist data across restarts, and that the current user can
-  write to it."
+fail() {
+  if [[ ! -z "$DEBUG" ]]; then
+    echo "[entrypoint] Pausing for 300 seconds"
+    sleep 300
+    echo "[entrypoint] Exiting..."
+  fi
+
   exit 1
+}
+
+if [[ ! -d "/data" ]]; then
+  echo "[entrypoint] The /data folder does not exist"
+  fail
+fi
+
+if [[ ! -w "/data" ]]; then
+  echo "[entrypoint] The /data folder cannot be written to."
+  fail
 fi
 
 if [[ ! -f "$CONFIG_FILE" ]]; then
@@ -18,7 +31,7 @@ fi
 
 if [[ ! -r "$CONFIG_FILE" ]]; then
   echo "[entrypoint] Config file is not readable. Check the permissions"
-  exit 1;
+  fail
 fi
 
 echo "> Setup permissions.."

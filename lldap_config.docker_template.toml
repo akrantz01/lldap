@@ -62,13 +62,18 @@
 ## is just the default one.
 #ldap_user_pass = "REPLACE_WITH_PASSWORD"
 
-## Currently, only Postgres is supported.
-## The connection information must be passed using the following environment variables.
-##  * PGHOST     - the host to connect to
-##  * PGPORT     - the port to connect to
-##  * PGUSER     - the user to authenticate with
-##  * PGPASSWORD - the password to authenticate with
-##  * PGDATABASE - the database to use
+## Database URL.
+## This encodes the type of database (SQlite, Mysql and so
+## on), the path, the user, password, and sometimes the mode (when
+## relevant).
+## Note: Currently, only SQlite is supported. SQlite should come with
+## "?mode=rwc" to create the DB if not present.
+## Example URLs:
+##  - "postgres://postgres-user:password@postgres-server/my-database"
+##  - "mysql://mysql-user:password@mysql-server/my-database"
+##
+## This can be overridden with the DATABASE_URL env variable.
+database_url = "sqlite:///data/users.db?mode=rwc"
 
 ## Private key file.
 ## Contains the secret private key used to store the passwords safely.

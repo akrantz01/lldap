@@ -78,6 +78,8 @@ pub struct Configuration {
     pub ldap_user_email: String,
     #[builder(default = r#"SecUtf8::from("password")"#)]
     pub ldap_user_pass: SecUtf8,
+    #[builder(default = r#"String::from("sqlite://users.db?mode=rwc")"#)]
+    pub database_url: String,
     #[builder(default)]
     pub ignored_user_attributes: Vec<String>,
     #[builder(default)]

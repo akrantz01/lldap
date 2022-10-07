@@ -7,7 +7,7 @@ use crate::{
         handler::{BackendHandler, CreateUserRequest, GroupRequestFilter},
         sql_backend_handler::SqlBackendHandler,
         sql_opaque_handler::register_password,
-        sql_tables::{PoolOptions, ConnectOptions},
+        sql_tables::PoolOptions,
     },
     infra::{cli::*, configuration::Configuration, db_cleaner::Scheduler, mail},
 };
@@ -53,7 +53,7 @@ async fn set_up_server(config: Configuration) -> Result<ServerBuilder> {
 
     let sql_pool = PoolOptions::new()
         .max_connections(5)
-        .connect_with(ConnectOptions::new().application_name("lldap"))
+        .connect(&config.database_url)
         .await
         .context("while connecting to the DB")?;
     domain::sql_tables::init_table(&sql_pool)

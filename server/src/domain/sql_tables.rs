@@ -6,7 +6,6 @@ use tracing::{debug, warn};
 
 pub type Pool = sqlx::postgres::PgPool;
 pub type PoolOptions = sqlx::postgres::PgPoolOptions;
-pub type ConnectOptions = sqlx::postgres::PgConnectOptions;
 pub type DbRow = sqlx::postgres::PgRow;
 pub type DbQueryBuilder = PostgresQueryBuilder;
 
